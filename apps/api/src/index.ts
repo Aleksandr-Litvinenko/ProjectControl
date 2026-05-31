@@ -11,6 +11,7 @@ import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
 import catalogRouter from './routes/catalog';
 import projectsRouter from './routes/projects';
+import checklistRouter from './routes/checklist';
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/catalog', catalogRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/projects', projectsRouter);
+app.use('/api/projects', checklistRouter);
 
 // 404 для неизвестных /api маршрутов
 app.use('/api', (_req, res) => {
