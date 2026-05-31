@@ -1,0 +1,297 @@
+// ProjectControl — Prisma schema (PostgreSQL)
+// Источник истины модели данных. См. ARCHITECTURE.md (ERD).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum Role {
+  pmo_admin
+  pm
+  specialist
+  observer
+  client
+}
+
+enum ProjectStatus {
+  planned
+  active
+  on_hold
+  done
+  cancelled
+}
+
+enum AccessRole {
+  pm
+  specialist
+  observer
+  client
+}
+
+enum DocType {
+  charter
+  project
+  plan
+  tz
+  kp
+  report
+  protocol
+  regulation
+  other
+}
+
+enum ChecklistStatus {
+  not_started
+  in_progress
+  ready
+  in_review
+  accepted
+  overdue
+}
+
+enum StageStatus {
+  planned
+  active
+  done
+}
+
+enum TaskStatus {
+  not_started
+  in_progress
+  done
+  blocked
+}
+
+// ───────────────────────── Models ─────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  fullName     String
+  email        String?  @unique
+  login        String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  createdProjects  Project[]       @relation("ProjectCreatedBy")
+  managedProjects  Project[]       @relation("ProjectPm")
+  access           ProjectAccess[]
+  allocations      Allocation[]
+  tasks            Task[]          @relation("TaskAssignee")
+  responsibleItems ChecklistItem[] @relation("ItemResponsible")
+  acceptedItems    ChecklistItem[] @relation("ItemAcceptedBy")
+  uploadedDocs     Document[]
+  auditLogs        AuditLog[]
+}
+
+model ProjectType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  projects  Project[]
+  templates ChecklistTemplate[]
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  title          String
+  client         String
+  projectTypeId  String
+  description    String?
+  status         ProjectStatus @default(planned)
+  startDate      DateTime?
+  plannedEndDate DateTime?
+  actualEndDate  DateTime?
+  createdById    String
+  pmUserId       String?
+  createdAt      DateTime      @default(now())
+
+  projectType ProjectType     @relation(fields: [projectTypeId], references: [id])
+  createdBy   User            @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+  pm          User?           @relation("ProjectPm", fields: [pmUserId], references: [id])
+  access      ProjectAccess[]
+  stages      Stage[]
+  checklist   ChecklistItem[]
+  tasks       Task[]
+  milestones  Milestone[]
+  allocations Allocation[]
+  documents   Document[]
+
+  @@index([projectTypeId])
+  @@index([pmUserId])
+  @@index([status])
+}
+
+model ProjectAccess {
+  id         String     @id @default(cuid())
+  projectId  String
+  userId     String
+  accessRole AccessRole
+  createdAt  DateTime   @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+model Stage {
+  id        String      @id @default(cuid())
+  projectId String
+  name      String
+  order     Int         @default(0)
+  startDate DateTime?
+  endDate   DateTime?
+  status    StageStatus @default(planned)
+
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  checklistItems ChecklistItem[]
+  tasks          Task[]
+
+  @@index([projectId])
+}
+
+model ChecklistTemplate {
+  id            String @id @default(cuid())
+  projectTypeId String
+  name          String
+
+  projectType ProjectType             @relation(fields: [projectTypeId], references: [id], onDelete: Cascade)
+  items       ChecklistTemplateItem[]
+
+  @@index([projectTypeId])
+}
+
+model ChecklistTemplateItem {
+  id                  String  @id @default(cuid())
+  templateId          String
+  title               String
+  docType             DocType @default(other)
+  mandatory           Boolean @default(false)
+  stageHint           Int?
+  requiresPmoApproval Boolean @default(false)
+  defaultOrder        Int     @default(0)
+
+  template ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+}
+
+model ChecklistItem {
+  id                  String          @id @default(cuid())
+  projectId           String
+  stageId             String?
+  title               String
+  docType             DocType         @default(other)
+  mandatory           Boolean         @default(false)
+  status              ChecklistStatus @default(not_started)
+  deadline            DateTime?
+  responsibleUserId   String?
+  requiresPmoApproval Boolean         @default(false)
+  acceptedById        String?
+  acceptedAt          DateTime?
+  order               Int             @default(0)
+  internalNote        String?
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage       Stage?     @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  responsible User?      @relation("ItemResponsible", fields: [responsibleUserId], references: [id])
+  acceptedBy  User?      @relation("ItemAcceptedBy", fields: [acceptedById], references: [id])
+  documents   Document[]
+
+  @@index([projectId])
+  @@index([stageId])
+}
+
+model Document {
+  id              String   @id @default(cuid())
+  checklistItemId String?
+  projectId       String
+  originalName    String
+  storedPath      String
+  mimeType        String
+  sizeBytes       Int
+  version         Int      @default(1)
+  uploadedById    String
+  uploadedAt      DateTime @default(now())
+
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  checklistItem ChecklistItem? @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
+  uploadedBy    User           @relation(fields: [uploadedById], references: [id])
+
+  @@index([projectId])
+  @@index([checklistItemId])
+}
+
+model Task {
+  id              String     @id @default(cuid())
+  projectId       String
+  stageId         String?
+  title           String
+  assigneeUserId  String?
+  startDate       DateTime?
+  endDate         DateTime?
+  progressPercent Int        @default(0)
+  status          TaskStatus @default(not_started)
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage    Stage?  @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  assignee User?   @relation("TaskAssignee", fields: [assigneeUserId], references: [id])
+
+  @@index([projectId])
+  @@index([stageId])
+}
+
+model Milestone {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String
+  date      DateTime
+  reached   Boolean  @default(false)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Allocation {
+  id               String   @id @default(cuid())
+  projectId        String
+  userId           String
+  periodStart      DateTime
+  periodEnd        DateTime
+  hoursPerDay      Float    @default(0)
+  occupancyPercent Int      @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+}
