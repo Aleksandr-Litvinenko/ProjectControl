@@ -8,6 +8,8 @@ import { env } from './env';
 import { HttpError } from './http';
 import { attachUser } from './middleware/auth';
 import authRouter from './routes/auth';
+import adminRouter from './routes/admin';
+import catalogRouter from './routes/catalog';
 
 const app = express();
 
@@ -35,6 +37,8 @@ app.get('/api/health', (_req, res) => {
 app.use(attachUser);
 
 app.use('/api/auth', authRouter);
+app.use('/api/catalog', catalogRouter);
+app.use('/api/admin', adminRouter);
 
 // 404 для неизвестных /api маршрутов
 app.use('/api', (_req, res) => {
