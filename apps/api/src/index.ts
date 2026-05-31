@@ -10,6 +10,7 @@ import { attachUser } from './middleware/auth';
 import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
 import catalogRouter from './routes/catalog';
+import projectsRouter from './routes/projects';
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use(attachUser);
 app.use('/api/auth', authRouter);
 app.use('/api/catalog', catalogRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/projects', projectsRouter);
 
 // 404 для неизвестных /api маршрутов
 app.use('/api', (_req, res) => {
