@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sw_vers)",
+      "Bash(sysctl -n hw.ncpu)",
+      "Bash(sysctl -n hw.memsize)",
+      "Bash(awk '{print $1/1073741824 \" GB\"}')",
+      "Bash(brew --version)",
+      "Bash(brew list *)",
+      "Bash(npm ping *)",
+      "Bash(echo \"=== existing keys ===\"; ls -la ~/.ssh/ 2>/dev/null | grep -E 'id_|config|known_hosts' || echo \"no ~/.ssh contents\"; echo \"=== expect ===\"; which expect 2>&1; echo \"=== sshpass ===\"; which sshpass 2>&1; echo \"=== ssh ===\"; which ssh)",
+      "Bash(mkdir -p ~/.ssh)",
+      "Bash(chmod 700 ~/.ssh)",
+      "Bash(ssh-keygen -t ed25519 -f ~/.ssh/projectcrm_ed25519 -N \"\" -C \"claude-projectcrm\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(chmod +x /tmp/pc_sshcopy.exp)",
+      "Bash(/tmp/pc_sshcopy.exp)",
+      "Bash(chmod 600 ~/.ssh/config)",
+      "Bash(ssh -o BatchMode=yes projectcrm 'echo \"KEY-AUTH OK as $\\(whoami\\)@$\\(hostname\\)\"')",
+      "Bash(ssh -o BatchMode=yes projectcrm 'echo KEY-AUTH OK as $\\(whoami\\)@$\\(hostname\\)')",
+      "Bash(ssh -v -o BatchMode=yes -o ConnectTimeout=15 projectcrm 'echo KEYAUTH_OK $\\(whoami\\)@$\\(hostname\\)')"
+    ]
+  }
+}

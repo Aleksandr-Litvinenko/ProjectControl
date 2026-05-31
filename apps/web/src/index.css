@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Дизайн-токены ProjectControl («диспетчерская проектного офиса») */
+  --ink: #14161f;
+  --surface: #fafafb;
+  --card: #ffffff;
+  --border: #e6e8ec;
+  --primary: #4f46e5;
+  --primary-600: #4338ca;
+  --viz: #0891b2;
+  --ok: #15803d;
+  --warn: #d97706;
+  --risk: #dc2626;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: 'Golos Text', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Табличные цифры для метрик/KPI */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
