@@ -90,13 +90,37 @@ cd apps/web && npm install && npm run dev   # http://localhost:5173 (прокс�
 
 ## Деплой на projectcrm.ru
 
-Подробная пошаговая инструкция — в разделе «Деплой» этого README (заполняется на этапе 11) и в `DECISIONS.md`. Кратко:
+Развёрнуто и доступно: **https://projectcrm.ru**
 
-1. `rsync` исходников на сервер в `/opt/projectcontrol`.
-2. `.env` с реальными секретами на сервере.
-3. `docker compose up -d --build` (db+api+web, слушают `127.0.0.1`).
-4. Подключить host-nginx-сайт `deploy/nginx-projectcrm.conf` (server_name `projectcrm.ru`), выпустить сертификат `certbot`.
-5. Соседние сайты (`game.*`, `gamecodex.*`) не затрагиваются.
+### Особенности целевого сервера (важно)
+1. **Docker bridge-сеть на хосте сломана** (нет предустановленной сети `bridge`, не работает DNS контейнеров). Поэтому образы собираются с `--network=host`, а `api`/`web` работают в `network_mode: host`; `db` — отдельный контейнер с публикацией `127.0.0.1:5433`, к которому API обращается по loopback. Подробности — `DECISIONS.md` (D15).
+2. **Публичный HTTPS терминирует edge-прокси провайдера** (Jino) своим wildcard-сертификатом `*.projectcrm.ru` и проксирует на origin:80. Поэтому на origin нет редиректа на HTTPS (иначе цикл). Свой Let's Encrypt-сертификат стоит в блоке `:443` для прямого доступа (D16).
+
+### Первичная установка
+```bash
+# 1) Синхронизировать код на сервер
+rsync -az --exclude=node_modules --exclude=.git --exclude=.env \
+  ./ root@<server>:/opt/projectcontrol/
+# 2) На сервере: создать .env (см. .env.example), сгенерировать секреты
+ssh root@<server>
+cd /opt/projectcontrol && cp .env.example .env && nano .env   # POSTGRES_PASSWORD, SESSION_SECRET
+# 3) Поднять стек (сборка с network=host + up)
+bash deploy/deploy.sh --seed      # --seed только при первом запуске
+# 4) host-nginx: сайт уже в /etc/nginx/sites-available/projectcontrol (см. deploy/nginx-projectcrm.conf)
+#    Сертификат: certbot --nginx -d projectcrm.ru -d www.projectcrm.ru
+```
+
+### Обновление (выкладка новой версии)
+```bash
+rsync -az --exclude=node_modules --exclude=.git --exclude=.env ./ root@<server>:/opt/projectcontrol/
+ssh root@<server> 'cd /opt/projectcontrol && bash deploy/deploy.sh'
+# миграции применяются автоматически при старте api (entrypoint: prisma migrate deploy)
+```
+
+Соседние сайты (`game.*`, `gamecodex.*`) деплоем **не затрагиваются**. Файлы (`storage`) и БД (`pc_db_data`) — в Docker volumes, переживают пересборку.
+
+### Демо-доступ
+Логин `admin` / пароль `Admin#2026` (полный список — `DECISIONS.md`). Сменить на проде.
 
 ## Документация
 
