@@ -36,3 +36,25 @@ body {
 .tnum {
   font-variant-numeric: tabular-nums;
 }
+
+/* Staggered reveal для карточек дашборда */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Тонкий скролл для Ганта */
+.thin-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
