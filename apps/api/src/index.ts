@@ -13,6 +13,10 @@ import catalogRouter from './routes/catalog';
 import projectsRouter from './routes/projects';
 import checklistRouter from './routes/checklist';
 import tasksRouter from './routes/tasks';
+import allocationsRouter, { allocationsSummaryRouter } from './routes/allocations';
+import dashboardRouter from './routes/dashboard';
+import exportRouter from './routes/export';
+import auditRouter from './routes/audit';
 
 const app = express();
 
@@ -45,6 +49,11 @@ app.use('/api/admin', adminRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/projects', checklistRouter);
 app.use('/api/projects', tasksRouter);
+app.use('/api/projects', allocationsRouter);
+app.use('/api/allocations', allocationsSummaryRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/export', exportRouter);
+app.use('/api/audit', auditRouter);
 
 // 404 для неизвестных /api маршрутов
 app.use('/api', (_req, res) => {

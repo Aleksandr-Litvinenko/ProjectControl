@@ -15,7 +15,7 @@ RUN npm install
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Сборка TS -> dist
+# Сборка TS -> dist (+ копирование assets, напр. шрифта для PDF)
 COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
