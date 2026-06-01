@@ -1,6 +1,12 @@
 # ProjectControl — продакшн-стек.
-# Все порты слушаются ТОЛЬКО на 127.0.0.1: внешний доступ и TLS даёт host-nginx,
-# который проксирует projectcrm.ru -> 127.0.0.1:8080 (web) -> /api -> api:4000.
+#
+# ВАЖНО (особенность сервера projectcrm.ru): на этом хосте сломана предопределённая
+# bridge-сеть Docker и встроенный DNS (127.0.0.11) — контейнеры не резолвят друг друга
+# по именам сервисов. Поэтому api и web работают в host-сети (как и соседний проект на
+# этом сервере). БД остаётся в bridge с публикацией порта 127.0.0.1:5433 (публикация
+# портов работает независимо от встроенного DNS). См. DECISIONS D15.
+#
+# Внешний доступ и TLS даёт host-nginx: projectcrm.ru -> 127.0.0.1:8080 (web) -> /api -> 127.0.0.1:4000 (api).
 name: projectcontrol
 
 services:
@@ -13,7 +19,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pc_db_data:/var/lib/postgresql/data
-    # Локальный порт для отладки/psql с хоста (не публичный)
+    # Публикуем на loopback — сюда же ходит api (в host-сети) и psql с хоста.
     ports:
       - "127.0.0.1:5433:5432"
     healthcheck:
@@ -23,19 +29,22 @@ services:
       retries: 10
 
   api:
+    image: projectcontrol-api
     build:
       context: ./apps/api
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+    network_mode: host
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: ${DATABASE_URL}
+      # В host-сети до БД ходим через опубликованный порт на loopback.
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5433/${POSTGRES_DB}?schema=public
       SESSION_SECRET: ${SESSION_SECRET}
       SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-7}
       API_PORT: "4000"
-      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       STORAGE_DIR: /app/storage
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
@@ -45,10 +54,9 @@ services:
       HEALTH_OVERLOAD_RED_PCT: ${HEALTH_OVERLOAD_RED_PCT:-120}
     volumes:
       - pc_storage:/app/storage
-    ports:
-      - "127.0.0.1:4000:4000"
 
   web:
+    image: projectcontrol-web
     build:
       context: ./apps/web
       args:
@@ -56,8 +64,7 @@ services:
     restart: unless-stopped
     depends_on:
       - api
-    ports:
-      - "127.0.0.1:8080:80"
+    network_mode: host
 
 volumes:
   pc_db_data:

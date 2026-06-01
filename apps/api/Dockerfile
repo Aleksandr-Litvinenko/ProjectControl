@@ -2,14 +2,15 @@
 FROM node:20-alpine
 
 WORKDIR /app
-ENV NODE_ENV=production
 
 # Системные зависимости для prisma engines на alpine
 RUN apk add --no-cache openssl
 
-# Установка зависимостей (включая dev: нужны prisma CLI, tsx, typescript)
+# Установка зависимостей. NODE_ENV не выставляем в production на этапе сборки,
+# иначе npm пропустит devDependencies (tsc/tsx/prisma CLI), которые нужны
+# и для сборки, и в рантайме (prisma migrate deploy, seed через tsx).
 COPY package*.json ./
-RUN npm install
+RUN npm install --include=dev
 
 # Генерация Prisma Client
 COPY prisma ./prisma
