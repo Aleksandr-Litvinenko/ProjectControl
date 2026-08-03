@@ -15,7 +15,9 @@
     "build:web": "npm run build -w apps/web",
     "prisma:generate": "npm run prisma:generate -w apps/api",
     "prisma:migrate": "npm run prisma:migrate -w apps/api",
-    "seed": "npm run seed -w apps/api"
+    "seed": "npm run seed -w apps/api",
+    "audit:routes": "node tools/audit-routes.mjs --markdown docs/ACCESS-MAP.md",
+    "audit:routes:check": "node tools/audit-routes.mjs --quiet"
   },
   "engines": {
     "node": ">=20"
