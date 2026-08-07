@@ -93,7 +93,7 @@ cd apps/web && npm install && npm run dev   # http://localhost:5173 (прокс�
 
 ## Переменные окружения
 
-См. `.env.example`. Ключевые: `DATABASE_URL`, `SESSION_SECRET`, `POSTGRES_*`, `MAX_UPLOAD_MB`, `PUBLIC_DOMAIN`, `COOKIE_SECURE`, пороги `HEALTH_*`.
+См. `.env.example`. Ключевые: `DATABASE_URL`, `SESSION_SECRET`, `POSTGRES_*`, `SEED_ADMIN_PASSWORD`, `SEED_DEMO_PASSWORD`, `MAX_UPLOAD_MB`, `PUBLIC_DOMAIN`, `COOKIE_SECURE`, пороги `HEALTH_*`.
 
 ## Деплой на projectcrm.ru
 
@@ -127,7 +127,7 @@ ssh root@<server> 'cd /opt/projectcontrol && bash deploy/deploy.sh'
 Соседние сайты (`game.*`, `gamecodex.*`) деплоем **не затрагиваются**. Файлы (`storage`) и БД (`pc_db_data`) — в Docker volumes, переживают пересборку.
 
 ### Демо-доступ
-Логин `admin` / пароль `Admin#2026` (полный список — `DECISIONS.md`). Сменить на проде.
+Публичные учётные данные в репозитории не хранятся. Для локальных или изолированных seed-данных задайте уникальные `SEED_ADMIN_PASSWORD` и `SEED_DEMO_PASSWORD` в `.env`. Не запускайте seed на production и не переиспользуйте production-пароли.
 
 ## Документация
 
