@@ -17,8 +17,16 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const ADMIN_PASSWORD = 'Admin#2026';
-const DEMO_PASSWORD = 'Demo#2026';
+function requiredSeedSecret(name: 'SEED_ADMIN_PASSWORD' | 'SEED_DEMO_PASSWORD'): string {
+  const value = process.env[name];
+  if (!value || value.startsWith('CHANGE_ME') || value.length < 12) {
+    throw new Error(`${name} must be set to a unique value with at least 12 characters`);
+  }
+  return value;
+}
+
+const ADMIN_PASSWORD = requiredSeedSecret('SEED_ADMIN_PASSWORD');
+const DEMO_PASSWORD = requiredSeedSecret('SEED_DEMO_PASSWORD');
 
 /** Дата со сдвигом в днях от «сейчас» (полдень) — чтобы статусы здоровья были осмысленными. */
 function dnow(days: number, hour = 12): Date {
@@ -330,13 +338,14 @@ async function createDemoProjects(types: Ids, users: Ids) {
 }
 
 function printCreds() {
-  console.log('\n──────── Демо-доступы (логин / пароль) ────────');
-  console.log(`  admin            / ${ADMIN_PASSWORD}    — Руководитель ПО (pmo_admin)`);
-  console.log(`  pm1, pm2, pm3    / ${DEMO_PASSWORD}     — Руководители проектов`);
-  console.log(`  spec1 … spec5    / ${DEMO_PASSWORD}     — Специалисты`);
-  console.log(`  obs1, obs2       / ${DEMO_PASSWORD}     — Наблюдатели`);
-  console.log(`  client1, client2 / ${DEMO_PASSWORD}     — Заказчики`);
-  console.log('───────────────────────────────────────────────\n');
+  console.log('\n──────── Демо-пользователи созданы ────────');
+  console.log('  admin — Руководитель ПО (pmo_admin)');
+  console.log('  pm1, pm2, pm3 — Руководители проектов');
+  console.log('  spec1 … spec5 — Специалисты');
+  console.log('  obs1, obs2 — Наблюдатели');
+  console.log('  client1, client2 — Заказчики');
+  console.log('  Пароли взяты из SEED_ADMIN_PASSWORD и SEED_DEMO_PASSWORD и не выводятся.');
+  console.log('───────────────────────────────────────────\n');
 }
 
 main()
