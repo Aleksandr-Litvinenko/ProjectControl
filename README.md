@@ -124,7 +124,7 @@ ssh root@<server> 'cd /opt/projectcontrol && bash deploy/deploy.sh'
 # миграции применяются автоматически при старте api (entrypoint: prisma migrate deploy)
 ```
 
-Соседние сайты (`game.*`, `gamecodex.*`) деплоем **не затрагиваются**. Файлы (`storage`) и БД (`pc_db_data`) — в Docker volumes, переживают пересборку.
+Деплой не затрагивает другие виртуальные хосты сервера. Файлы (`storage`) и БД (`pc_db_data`) — в Docker volumes, переживают пересборку.
 
 ### Демо-доступ
 Публичные учётные данные в репозитории не хранятся. Для локальных или изолированных seed-данных задайте уникальные `SEED_ADMIN_PASSWORD` и `SEED_DEMO_PASSWORD` в `.env`. Не запускайте seed на production и не переиспользуйте production-пароли.
